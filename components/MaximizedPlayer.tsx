@@ -22,12 +22,15 @@ interface MaximizedPlayerProps {
   volume: number;
   setVolume: (volume: number) => void;
   isSeeking: boolean;
-setIsSeeking: (value: boolean) => void;
+  setIsSeeking: (value: boolean) => void;
   queue: QueueItem[];
   onRemoveFromQueue: (itemId: string) => void;
   onSongPlay: (song: Song) => void;
   imageUrls: Record<string, string>;
-
+  isShuffleEnabled: boolean;
+  setIsShuffleEnabled: (enabled: boolean) => void;
+  repeatMode: 'off' | 'once' | 'infinite';
+  setRepeatMode: (mode: 'off' | 'once' | 'infinite') => void;
 }
 
 const MaximizedPlayer: React.FC<MaximizedPlayerProps> = ({
@@ -51,7 +54,11 @@ const MaximizedPlayer: React.FC<MaximizedPlayerProps> = ({
   queue,
   onRemoveFromQueue,
   onSongPlay,
-  imageUrls
+  imageUrls,
+  isShuffleEnabled,
+  setIsShuffleEnabled,
+  repeatMode,
+  setRepeatMode
 }) => {
   const { isDarkMode } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
@@ -70,6 +77,60 @@ const MaximizedPlayer: React.FC<MaximizedPlayerProps> = ({
 
   const handleLike = () => {
     onToggleLike();
+  };
+
+  const handleShuffleToggle = () => {
+    const newShuffleState = !isShuffleEnabled;
+    setIsShuffleEnabled(newShuffleState);
+    
+    // If enabling shuffle, disable repeat
+    if (newShuffleState) {
+      setRepeatMode('off');
+    }
+  };
+
+  const handleRepeatToggle = () => {
+    // Cycle through repeat modes: off -> once -> infinite -> off
+    let nextMode: 'off' | 'once' | 'infinite';
+    
+    switch (repeatMode) {
+      case 'off':
+        nextMode = 'once';
+        break;
+      case 'once':
+        nextMode = 'infinite';
+        break;
+      case 'infinite':
+        nextMode = 'off';
+        break;
+      default:
+        nextMode = 'off';
+    }
+    
+    setRepeatMode(nextMode);
+    
+    // If enabling repeat, disable shuffle
+    if (nextMode !== 'off') {
+      setIsShuffleEnabled(false);
+    }
+  };
+
+  const getRepeatIcon = () => {
+    switch (repeatMode) {
+      case 'once':
+        return (
+          <div className="relative">
+            <Repeat size={24} className="text-purple-400" />
+            <span className="absolute -top-1 -right-1 text-xs bg-purple-400 text-white rounded-full w-4 h-4 flex items-center justify-center font-bold">
+              1
+            </span>
+          </div>
+        );
+      case 'infinite':
+        return <Repeat size={24} className="text-purple-400" />;
+      default:
+        return <Repeat size={24} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />;
+    }
   };
 
   return (
@@ -206,8 +267,11 @@ const MaximizedPlayer: React.FC<MaximizedPlayerProps> = ({
           {/* Main Controls */}
           <div className="mb-8">
             <div className="flex items-center justify-center space-x-6">
-              <button className={`p-2 ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-200'} rounded-full transition-colors`}>
-                <Shuffle size={24} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
+              <button 
+                onClick={handleShuffleToggle}
+                className={`p-2 ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-200'} rounded-full transition-colors`}
+              >
+                <Shuffle size={24} className={isShuffleEnabled ? 'text-purple-400' : isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
               </button>
               
               <button 
@@ -235,8 +299,11 @@ const MaximizedPlayer: React.FC<MaximizedPlayerProps> = ({
                 <SkipForward size={28} className={isDarkMode ? 'text-white' : 'text-gray-900'} />
               </button>
               
-              <button className={`p-2 ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-200'} rounded-full transition-colors`}>
-                <Repeat size={24} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
+              <button 
+                onClick={handleRepeatToggle}
+                className={`p-2 ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-200'} rounded-full transition-colors`}
+              >
+                {getRepeatIcon()}
               </button>
             </div>
           </div>

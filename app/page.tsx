@@ -82,6 +82,10 @@ function MusicPlayerContent() {
   const [songStartTime, setSongStartTime] = useState<Date | null>(null);
   const [batchStartIndex, setBatchStartIndex] = useState(0);
   
+  // Shuffle and repeat state
+  const [isShuffleEnabled, setIsShuffleEnabled] = useState(true); // Shuffle on by default
+  const [repeatMode, setRepeatMode] = useState<'off' | 'once' | 'infinite'>('off');
+
 const loadMoreSongs = () => {
   setDisplayCount(prev => prev + 15);
 };
@@ -645,6 +649,20 @@ const handleNext = async () => {
       }
     }
     
+    // Handle repeat modes
+    if (repeatMode === 'once' || repeatMode === 'infinite') {
+      // Restart the current song
+      setCurrentTime(0);
+      setIsPlaying(true);
+      setSongStartTime(new Date());
+      
+      // If repeat once, turn off repeat after playing once
+      if (repeatMode === 'once') {
+        setRepeatMode('off');
+      }
+      return;
+    }
+    
     // When a song ends, automatically play the next one
     await handleNext();
 };
@@ -810,6 +828,10 @@ const setCurrentTimeState = setCurrentTime;
                 onRemoveFromQueue={removeFromQueue}
                 onSongPlay={handleSongPlay}
                 imageUrls={imageUrls}
+                isShuffleEnabled={isShuffleEnabled}
+                setIsShuffleEnabled={setIsShuffleEnabled}
+                repeatMode={repeatMode}
+                setRepeatMode={setRepeatMode}
               />
             )}
           </>
