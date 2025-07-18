@@ -70,8 +70,8 @@ function MusicPlayerContent() {
   const [isSeeking, setIsSeeking] = useState(false);
   const [pendingSeekTime, setPendingSeekTime] = useState<number | null>(null);
   const [isExternallySeeking, setIsExternallySeeking] = useState(false);
-  const [recommendedQueue, setRecommendedQueue] = useState<Song[]>([])
-  const [playedSongs, setPlayedSongs] = useState<Set<string>>(new Set())  
+  const [recommendedQueue, setRecommendedQueue] = useState<Song[]>([]);
+  const [playedSongs, setPlayedSongs] = useState<Set<string>>(new Set());  
   const [personalizedList, setPersonalizedList] = useState<Song[]>([]);
   const [currentSongIndex, setCurrentSongIndex] = useState<number>(0);
   const [listenedSongs, setListenedSongs] = useState<Set<string>>(new Set());
@@ -714,16 +714,12 @@ const handleNext = async () => {
               songs={songs}
               onSongPlay={handleSongPlay}
               formatNumber={formatNumber}
-        // Disable shuffle when enabling repeat
-        setIsShuffleEnabled(false);
               onAddToPlaylist={handleAddToPlaylist}
               onAddToQueue={handleAddToQueue}
               imageUrls={imageUrls}
               setImageUrls={setImageUrls}
             />;
       case 'settings':
-        // Auto-enable shuffle when turning off repeat
-        setIsShuffleEnabled(true);
         return <SettingsPage onPlaylistsClick={() => setCurrentPage('playlists')} onLikedClick={() => setCurrentPage('liked')} />;
       default:
         return <HomePage
@@ -733,6 +729,10 @@ const handleNext = async () => {
               onAddToPlaylist={handleAddToPlaylist}
               onAddToQueue={handleAddToQueue}
               imageUrls={imageUrls}
+              onLoadMore={loadMoreSongs}
+              hasMoreSongs={displayCount < songs.length}
+            />;
+    }
   };
 
   const themeClasses = isDarkMode 
@@ -815,20 +815,16 @@ const setCurrentTimeState = setCurrentTime;
                 onAddToPlaylist={() => handleAddToPlaylist(currentSong)}
                 currentTime={currentTime}
                 duration={duration}
-
-              setCurrentTime={(seekTime) => {
-  if (audioRef.current && !isNaN(audioRef.current.duration)) {
-    setIsExternallySeeking(true);
-    audioRef.current.currentTime = seekTime;
-    setCurrentTimeState(seekTime);
-    setTimeout(() => setIsExternallySeeking(false), 200);
-  } else {
-    setPendingSeekTime(seekTime); // Will apply onLoadedMetadata
-  }
-}}
-
-
-
+                setCurrentTime={(seekTime) => {
+                  if (audioRef.current && !isNaN(audioRef.current.duration)) {
+                    setIsExternallySeeking(true);
+                    audioRef.current.currentTime = seekTime;
+                    setCurrentTimeState(seekTime);
+                    setTimeout(() => setIsExternallySeeking(false), 200);
+                  } else {
+                    setPendingSeekTime(seekTime); // Will apply onLoadedMetadata
+                  }
+                }}
                 volume={volume}
                 setVolume={setVolume}
                 isSeeking={isSeeking}
@@ -838,9 +834,21 @@ const setCurrentTimeState = setCurrentTime;
                 onSongPlay={handleSongPlay}
                 imageUrls={imageUrls}
                 isShuffleEnabled={isShuffleEnabled}
-                setIsShuffleEnabled={setIsShuffleEnabled}
+                setIsShuffleEnabled={(enabled) => {
+                  setIsShuffleEnabled(enabled);
+                  // Disable shuffle when enabling repeat
+                  if (repeatMode !== 'off') {
+                    setIsShuffleEnabled(false);
+                  }
+                }}
                 repeatMode={repeatMode}
-                setRepeatMode={setRepeatMode}
+                setRepeatMode={(mode) => {
+                  setRepeatMode(mode);
+                  if (mode !== 'off') {
+                    // Auto-enable shuffle when turning off repeat
+                    setIsShuffleEnabled(true);
+                  }
+                }}
               />
             )}
           </>
