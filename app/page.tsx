@@ -652,13 +652,22 @@ const handleNext = async () => {
     // Handle repeat modes
     if (repeatMode === 'once' || repeatMode === 'infinite') {
       // Restart the current song
-      setCurrentTime(0);
-      setIsPlaying(true);
-      setSongStartTime(new Date());
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        setCurrentTime(0);
+        audioRef.current.play().then(() => {
+          setIsPlaying(true);
+          setSongStartTime(new Date());
+        }).catch((error) => {
+          console.error('Error playing repeated song:', error);
+        });
+      }
       
       // If repeat once, turn off repeat after playing once
       if (repeatMode === 'once') {
         setRepeatMode('off');
+        // Auto-enable shuffle when repeat once finishes
+        setIsShuffleEnabled(true);
       }
       return;
     }
@@ -705,12 +714,16 @@ const handleNext = async () => {
               songs={songs}
               onSongPlay={handleSongPlay}
               formatNumber={formatNumber}
+        // Disable shuffle when enabling repeat
+        setIsShuffleEnabled(false);
               onAddToPlaylist={handleAddToPlaylist}
               onAddToQueue={handleAddToQueue}
               imageUrls={imageUrls}
               setImageUrls={setImageUrls}
             />;
       case 'settings':
+        // Auto-enable shuffle when turning off repeat
+        setIsShuffleEnabled(true);
         return <SettingsPage onPlaylistsClick={() => setCurrentPage('playlists')} onLikedClick={() => setCurrentPage('liked')} />;
       default:
         return <HomePage
@@ -720,10 +733,6 @@ const handleNext = async () => {
               onAddToPlaylist={handleAddToPlaylist}
               onAddToQueue={handleAddToQueue}
               imageUrls={imageUrls}
-              onLoadMore={loadMoreSongs}
-              hasMoreSongs={displayCount < songs.length}
-            />;
-    }
   };
 
   const themeClasses = isDarkMode 

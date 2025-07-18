@@ -108,11 +108,6 @@ const MaximizedPlayer: React.FC<MaximizedPlayerProps> = ({
     }
     
     setRepeatMode(nextMode);
-    
-    // If enabling repeat, disable shuffle
-    if (nextMode !== 'off') {
-      setIsShuffleEnabled(false);
-    }
   };
 
   const getRepeatIcon = () => {
